@@ -1,3 +1,4 @@
+import "package:DriveVue/terms_and_conditions.dart";
 import "package:flutter/material.dart";
 
 void main() {
@@ -39,8 +40,20 @@ class SplashScreen extends StatelessWidget {
                         fontFamily: "Times New Roman",
                         fontSize: 15,
                       ),
-                    )
+                    ),
                   ],
+                ),
+              ),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => TermsAndConditions()),
+                    );
+                  },
+                  child: null,
                 ),
               )
             ],
