@@ -2,11 +2,11 @@ import "package:DriveVue/terms_and_conditions.dart";
 import "package:flutter/material.dart";
 
 void main() {
-  runApp(SplashScreen());
+  runApp(SplashScreen1());
 }
 
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
+class SplashScreen1 extends StatelessWidget {
+  const SplashScreen1({super.key});
 
   @override
   Widget build(BuildContext context) {

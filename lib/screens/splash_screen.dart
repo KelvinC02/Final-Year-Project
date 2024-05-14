@@ -1,5 +1,6 @@
+import 'package:DriveVue/screens/on_boarding_pg_one.dart';
 import 'package:flutter/material.dart';
-import 'package:DriveVue/core/app_export.dart';
+import '../core/app_export.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({Key? key})
@@ -14,7 +15,7 @@ class SplashScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Container(
         width: double.maxFinite,
-        padding: EdgeInsets.symmetric(vertical: 35),
+        padding: EdgeInsets.symmetric(vertical: 35.v),
         child: Column(
           children: [
             Spacer(
