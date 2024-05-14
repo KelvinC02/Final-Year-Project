@@ -22,7 +22,7 @@ class SplashScreen extends StatelessWidget {
               flex: 37,
             ),
             SizedBox(
-              child: (Image.asset('assets/images/app_logo.jpeg')),
+              child: (Image.asset('assets/images/app_logo.png')),
             ),
             Spacer(
               flex: 62,
