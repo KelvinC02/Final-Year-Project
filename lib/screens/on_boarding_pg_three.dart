@@ -150,10 +150,10 @@ class OnBoardingPgThreeScreen extends StatelessWidget {
   }
 
   onRightTap(BuildContext context) {
-    Navigator.pushNamed(context, AppRoutes.welcomeScreen);
+    Navigator.pushNamed(context, AppRoutes.tncScreen);
   }
 
   onTapSkip(BuildContext context) {
-    Navigator.pushNamed(context, AppRoutes.welcomeScreen);
+    Navigator.pushNamed(context, AppRoutes.tncScreen);
   }
 }

@@ -154,6 +154,6 @@ class OnBoardingPgTwoScreen extends StatelessWidget {
   }
 
   onTapSkip(BuildContext context) {
-    Navigator.pushNamed(context, AppRoutes.welcomeScreen);
+    Navigator.pushNamed(context, AppRoutes.tncScreen);
   }
 }

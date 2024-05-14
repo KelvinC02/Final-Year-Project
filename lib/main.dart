@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: 'drivevue',
           debugShowCheckedModeBanner: false,
-          initialRoute: AppRoutes.onBoardingPgOneScreen,
+          initialRoute: AppRoutes.splashscreenScreen,
           routes: AppRoutes.routes,
         );
       },
