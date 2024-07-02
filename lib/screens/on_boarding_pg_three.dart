@@ -1,7 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_export.dart';
-import '../widgets/appbar_subtitle_one.dart';
+import '../widgets/appbar/appbar_subtitle_one.dart';
 import '../widgets/custom_appbar.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 

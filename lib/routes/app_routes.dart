@@ -45,8 +45,8 @@ class AppRoutes {
     tutorialEndScreen: (context) => TutorialEndScreen(),
     mainPageScreen: (context) => MainScreen(),
     tipsOnPlacingCameraScreen: (context) => CameraTipsScreen(),
-    objectRecognitionMainPageScreen: (context) =>
-        ObjectRecognitionMainPageScreen(),
+    // objectRecognitionMainPageScreen: (context) =>
+    //     ObjectRecognitionMainPageScreen(),
     initialRoute: (context) => SplashScreen()
   };
 }
