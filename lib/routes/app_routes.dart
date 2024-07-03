@@ -1,5 +1,3 @@
-import 'package:DriveVue/splash_screen.dart';
-import 'package:DriveVue/terms_and_conditions.dart';
 import 'package:flutter/material.dart';
 import '../core/app_export.dart';
 import '../screens/camera_tips.dart';

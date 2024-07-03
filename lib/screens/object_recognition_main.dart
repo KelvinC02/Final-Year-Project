@@ -1,9 +1,15 @@
+import 'dart:io';
+
 import 'package:DriveVue/widgets/appbar/appbar_subtitle.dart';
 import 'package:DriveVue/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../core/app_export.dart';
+import 'package:flutter_vision/flutter_vision.dart';
+
+FlutterVision vision = FlutterVision();
 
 class ObjectRecognitionMainPageScreen extends StatefulWidget {
   final bool permissionGranted;
@@ -21,31 +27,115 @@ class _ObjectRecognitionMainPageScreenState
     extends State<ObjectRecognitionMainPageScreen> {
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
+  List<Recognition> _recognitions = []; // Initialize as an empty list
+  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.permissionGranted) {
       _initializeCamera();
+      _loadModel();
     }
   }
 
   void _initializeCamera() async {
-    final cameras = await availableCameras();
-    final firstCamera = cameras.first;
-    _controller = CameraController(
-      firstCamera,
-      ResolutionPreset.high,
-    );
-    _initializeControllerFuture = _controller!.initialize();
-    if (mounted) {
-      setState(() {}); // Update the UI after initializing the controller
+    try {
+      final cameras = await availableCameras();
+      final firstCamera = cameras.first;
+      _controller = CameraController(
+        firstCamera,
+        ResolutionPreset.high,
+      );
+      _initializeControllerFuture = _controller!.initialize().then((_) {
+        if (mounted) {
+          setState(() {});
+          _controller?.startImageStream((image) {
+            if (!_isProcessing) {
+              _isProcessing = true;
+              _processCameraImage(image);
+            }
+          });
+        }
+      });
+      print('Camera initialized successfully');
+    } catch (e) {
+      print('Error initializing camera: $e');
+    }
+  }
+
+  Future<void> _loadModel() async {
+    try {
+      await vision.loadYoloModel(
+        labels: 'assets/labels.txt',
+        modelPath: 'assets/yolov8s.tflite',
+        modelVersion: 'yolov8',
+        quantization: false,
+        numThreads: 1,
+        useGpu: false,
+      );
+      print('YOLO model loaded successfully');
+    } catch (e) {
+      print('Error loading YOLO model: $e');
+    }
+  }
+
+  void _processCameraImage(CameraImage image) async {
+    try {
+      final bytesList = image.planes.map((plane) => plane.bytes).toList();
+      if (bytesList.isEmpty) {
+        print('Error: bytesList is empty');
+        return;
+      }
+
+      final results = await vision.yoloOnFrame(
+        bytesList: bytesList,
+        imageHeight: image.height,
+        imageWidth: image.width,
+        iouThreshold: 0.4,
+        confThreshold: 0.4,
+        classThreshold: 0.5,
+      );
+
+      if (results.isNotEmpty) {
+        print('Recognition results: $results');
+        setState(() {
+          _recognitions = results.map((result) {
+            final label = result['tag'] ?? '';
+            final confidence = result['4'] ?? 0.0;
+
+            // Map the bounding box coordinates back to the original image dimensions
+            final x1 = result['box'][0] * image.width / 800;
+            final y1 = result['box'][1] * image.height / 800;
+            final x2 = result['box'][2] * image.width / 800;
+            final y2 = result['box'][3] * image.height / 800;
+
+            final rect = Rect.fromLTRB(x1, y1, x2, y2);
+
+            return Recognition(
+              label: label,
+              confidence: confidence,
+              rect: rect,
+            );
+          }).toList();
+        });
+      } else {
+        print('No object detected');
+        setState(() {
+          _recognitions = [];
+        });
+      }
+    } catch (e) {
+      print('Error processing camera image: $e');
+    } finally {
+      _isProcessing = false; // Reset the flag
     }
   }
 
   @override
   void dispose() {
     _controller?.dispose();
+    vision.closeYoloModel();
     super.dispose();
   }
 
@@ -54,14 +144,83 @@ class _ObjectRecognitionMainPageScreenState
       return Center(child: CircularProgressIndicator());
     }
 
-    return Positioned.fill(
-      top: MediaQuery.of(context).size.height *
-          0.10, // Adjust top position as needed
-      bottom: MediaQuery.of(context).size.height *
-          0.15, // Adjust bottom position as needed
-      child: Container(
-        child: CameraPreview(_controller!),
-      ),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: AspectRatio(
+            aspectRatio: _controller!.value.aspectRatio,
+            child: CameraPreview(_controller!),
+          ),
+        ),
+        _buildRecognitionOverlay(),
+      ],
+    );
+  }
+
+  Widget _buildRecognitionOverlay() {
+    if (_recognitions.isEmpty) return Container();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var screenWidth = constraints.maxWidth;
+        var screenHeight = constraints.maxHeight;
+
+        var previewWidth = _controller!.value.previewSize!.height;
+        var previewHeight = _controller!.value.previewSize!.width;
+
+        var screenRatio = screenWidth / screenHeight;
+        var previewRatio = previewWidth / previewHeight;
+
+        double scaleX, scaleY;
+        if (screenRatio > previewRatio) {
+          scaleX = screenWidth / previewWidth;
+          scaleY = scaleX;
+        } else {
+          scaleY = screenHeight / previewHeight;
+          scaleX = scaleY;
+        }
+
+        print('Screen size: $screenWidth x $screenHeight');
+        print('Preview size: $previewWidth x $previewHeight');
+        print('Scale factors: scaleX=$scaleX, scaleY=$scaleY');
+
+        return Stack(
+          children: _recognitions.map((recog) {
+            var box = recog.rect;
+            var tag = recog.label;
+            var confidence = recog.confidence;
+
+            // Adjust the box coordinates based on the scale
+            var left = box.left * scaleX;
+            var top = box.top * scaleY;
+            var width = box.width * scaleX;
+            var height = box.height * scaleY;
+
+            return Positioned(
+              left: left,
+              top: top,
+              width: width,
+              height: height,
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.red,
+                    width: 2,
+                  ),
+                ),
+                child: Text(
+                  "$tag ${(confidence * 100).toStringAsFixed(0)}%",
+                  style: TextStyle(
+                    background: Paint()..color = Colors.red,
+                    color: Colors.white,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 
@@ -69,39 +228,35 @@ class _ObjectRecognitionMainPageScreenState
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        appBar: _buildAppBar(context),
         body: Stack(
           children: [
-            // Camera preview or Permission Denied message
-            widget.permissionGranted
-                ? FutureBuilder<void>(
-                    future: _initializeControllerFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        return _buildCameraPreview();
-                      } else {
-                        return Center(child: CircularProgressIndicator());
-                      }
-                    },
-                  )
-                : Center(
-                    child: Text(
-                      'Permission Denied',
-                      style: TextStyle(fontSize: 24.0, color: Colors.red),
+            Positioned.fill(
+              child: widget.permissionGranted
+                  ? FutureBuilder<void>(
+                      future: _initializeControllerFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          return _buildCameraPreview();
+                        } else {
+                          return Center(child: CircularProgressIndicator());
+                        }
+                      },
+                    )
+                  : Center(
+                      child: Text(
+                        'Permission Denied',
+                        style: TextStyle(fontSize: 24.0, color: Colors.red),
+                      ),
                     ),
-                  ),
-            // Other widgets
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: _buildInboxImages1(context),
             ),
-            Positioned(
-              bottom: 20.0,
-              left: 0,
-              right: 0,
-              child: _buildInboxImages2(context),
+            Column(
+              children: [
+                _buildInboxImages1(context), // Top row of icons
+                Expanded(
+                  child: Container(), // Empty container to fill space
+                ),
+                _buildInboxImages2(context), // Bottom row of icons
+              ],
             ),
           ],
         ),
@@ -162,16 +317,22 @@ class _ObjectRecognitionMainPageScreenState
 
   Widget _buildInboxImages2(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(left: 14.0, right: 20.0),
+      padding: EdgeInsets.only(left: 14.0, right: 20.0, bottom: 10.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            margin: EdgeInsets.symmetric(vertical: 9.0),
-            child: Image(
-              image: AssetImage('assets/images/return_icon.png'),
-              height: 40.0,
-              width: 40.0,
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context,
+                  AppRoutes.mainPageScreen); // Navigate back to previous screen
+            },
+            child: Container(
+              margin: EdgeInsets.symmetric(vertical: 9.0),
+              child: Image(
+                image: AssetImage('assets/images/return_icon.png'),
+                height: 40.0,
+                width: 40.0,
+              ),
             ),
           ),
           Spacer(flex: 51),
@@ -181,12 +342,18 @@ class _ObjectRecognitionMainPageScreenState
             width: 58.0,
           ),
           Spacer(flex: 48),
-          Container(
-            margin: EdgeInsets.symmetric(vertical: 9.0),
-            child: Image(
-              image: AssetImage('assets/images/gallery_icon.png'),
-              height: 40.0,
-              width: 40.0,
+          GestureDetector(
+            onTap: () {
+              _checkPermissionAndOpenGallery(
+                  context); // Call method to check permission and open gallery
+            },
+            child: Container(
+              margin: EdgeInsets.symmetric(vertical: 9.0),
+              child: Image(
+                image: AssetImage('assets/images/gallery_icon.png'),
+                height: 40.0,
+                width: 40.0,
+              ),
             ),
           ),
         ],
@@ -194,41 +361,141 @@ class _ObjectRecognitionMainPageScreenState
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return CustomAppBar(
-      centerTitle: true,
-      title: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(
-              left: 15.h,
-              right: 130.h,
-            ),
-            child: Row(
-              children: [
-                Flexible(
-                  child: Image(
-                    image: AssetImage('assets/images/app_logo.png'),
-                    height: kToolbarHeight,
-                  ),
-                ),
-                SizedBox(
-                  width: 20.h,
-                ),
-                Expanded(
-                  child: AppbarSubtitle(
-                    text: "DriveVue",
-                  ),
-                ),
-              ],
-            ),
+  void _checkPermissionAndOpenGallery(BuildContext context) async {
+    var status = await Permission.photos.status;
+
+    if (status.isGranted) {
+      _openGallery(context);
+    } else if (status.isDenied || status.isRestricted) {
+      // Request permission
+      status = await Permission.photos.request();
+      if (status.isGranted) {
+        _openGallery(context);
+      } else {
+        // Show alert dialog for permission request
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Permission Required'),
+            content:
+                Text('Please grant access to your photos to use this feature.'),
+            actions: <Widget>[
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  openAppSettings(); // Open app settings to allow user to manually grant permission
+                },
+              ),
+            ],
           ),
-          SizedBox(
-            height: 10.h,
+        );
+      }
+    } else if (status.isPermanentlyDenied) {
+      // Handle permanent denial scenario (optional)
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Permission Required'),
+          content: Text(
+              'You have denied gallery access permanently. Please enable it in app settings.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                openAppSettings(); // Open app settings
+              },
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _openGallery(BuildContext context) {
+    // You can navigate to a screen that interacts with the gallery here
+    // Example:
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: Text('Gallery'),
           ),
-        ],
+          body: Center(
+            child: Text('Gallery Screen'),
+          ),
+        ),
       ),
-      styleType: Style.bgFill,
     );
+  }
+}
+
+class Recognition {
+  final String label;
+  final double confidence;
+  final Rect rect;
+
+  Recognition({
+    required this.label,
+    required this.confidence,
+    required this.rect,
+  });
+}
+
+class RecognitionPainter extends CustomPainter {
+  final List<Recognition> recognitions;
+  final double previewWidth;
+  final double previewHeight;
+
+  RecognitionPainter(this.recognitions, this.previewWidth, this.previewHeight);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+
+    final textPainter = TextPainter(
+      textAlign: TextAlign.left,
+      textDirection: TextDirection.ltr,
+    );
+
+    for (var recognition in recognitions) {
+      // Scale rect position and size based on the canvas size
+      final rect = Rect.fromLTRB(
+        recognition.rect.left * size.width / previewWidth,
+        recognition.rect.top * size.height / previewHeight,
+        recognition.rect.right * size.width / previewWidth,
+        recognition.rect.bottom * size.height / previewHeight,
+      );
+
+      // Draw bounding box
+      canvas.drawRect(rect, paint);
+
+      // Prepare and draw label text
+      final label =
+          '${recognition.label} ${(recognition.confidence * 100).toStringAsFixed(1)}%';
+      textPainter.text = TextSpan(
+        text: label,
+        style: TextStyle(
+          color: Colors.red,
+          fontSize: 16,
+          background: Paint()..color = Colors.white,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(rect.left, rect.top - textPainter.height),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return true;
   }
 }
