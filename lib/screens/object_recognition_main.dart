@@ -1,13 +1,9 @@
-import 'dart:io';
-
-import 'package:DriveVue/widgets/appbar/appbar_subtitle.dart';
-import 'package:DriveVue/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../core/app_export.dart';
 import 'package:flutter_vision/flutter_vision.dart';
+import 'package:image_picker/image_picker.dart';
 
 FlutterVision vision = FlutterVision();
 
@@ -315,6 +311,16 @@ class _ObjectRecognitionMainPageScreenState
     );
   }
 
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      // Do something with the picked file, e.g., display it in an Image widget
+      print('Picked file path: ${pickedFile.path}');
+    }
+  }
+
   Widget _buildInboxImages2(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(left: 14.0, right: 20.0, bottom: 10.0),
@@ -343,9 +349,8 @@ class _ObjectRecognitionMainPageScreenState
           ),
           Spacer(flex: 48),
           GestureDetector(
-            onTap: () {
-              _checkPermissionAndOpenGallery(
-                  context); // Call method to check permission and open gallery
+            onTap: () async {
+              await _pickImage(); // Open the gallery to pick an image
             },
             child: Container(
               margin: EdgeInsets.symmetric(vertical: 9.0),
@@ -357,76 +362,6 @@ class _ObjectRecognitionMainPageScreenState
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _checkPermissionAndOpenGallery(BuildContext context) async {
-    var status = await Permission.photos.status;
-
-    if (status.isGranted) {
-      _openGallery(context);
-    } else if (status.isDenied || status.isRestricted) {
-      // Request permission
-      status = await Permission.photos.request();
-      if (status.isGranted) {
-        _openGallery(context);
-      } else {
-        // Show alert dialog for permission request
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Permission Required'),
-            content:
-                Text('Please grant access to your photos to use this feature.'),
-            actions: <Widget>[
-              TextButton(
-                child: Text('OK'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  openAppSettings(); // Open app settings to allow user to manually grant permission
-                },
-              ),
-            ],
-          ),
-        );
-      }
-    } else if (status.isPermanentlyDenied) {
-      // Handle permanent denial scenario (optional)
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Permission Required'),
-          content: Text(
-              'You have denied gallery access permanently. Please enable it in app settings.'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                openAppSettings(); // Open app settings
-              },
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-  void _openGallery(BuildContext context) {
-    // You can navigate to a screen that interacts with the gallery here
-    // Example:
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: Text('Gallery'),
-          ),
-          body: Center(
-            child: Text('Gallery Screen'),
-          ),
-        ),
       ),
     );
   }
