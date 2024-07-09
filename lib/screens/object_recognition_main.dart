@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../core/app_export.dart';
 import 'package:flutter_vision/flutter_vision.dart';
 import 'package:image_picker/image_picker.dart';
@@ -98,7 +97,7 @@ class _ObjectRecognitionMainPageScreenState
         setState(() {
           _recognitions = results.map((result) {
             final label = result['tag'] ?? '';
-            final confidence = result['4'] ?? 0.0;
+            final confidence = result['box'][4] ?? 0.0;
 
             // Map the bounding box coordinates back to the original image dimensions
             final x1 = result['box'][0] * image.width / 800;
@@ -183,7 +182,10 @@ class _ObjectRecognitionMainPageScreenState
         return Stack(
           children: _recognitions.map((recog) {
             var box = recog.rect;
-            var tag = recog.label;
+            var tag;
+            if (recog.label == "car" || recog.label == "truck") {
+              tag = "obstacles";
+            }
             var confidence = recog.confidence;
 
             // Adjust the box coordinates based on the scale
@@ -297,18 +299,42 @@ class _ObjectRecognitionMainPageScreenState
             ),
           ),
           Expanded(
-            child: Container(
-              margin: EdgeInsets.only(left: 20.0),
-              child: Image(
-                image: AssetImage('assets/images/silent_icon.png'),
-                height: 80.0,
-                width: 80.0,
+            child: GestureDetector(
+              onTap: _toggleSilentMode,
+              child: Container(
+                margin: EdgeInsets.only(left: 20.0),
+                child: Image(
+                  image: AssetImage(
+                    _isSilentMode
+                        ? 'assets/images/silent_icon.png'
+                        : 'assets/images/bell_icon.png',
+                  ),
+                  height: 80.0,
+                  width: 80.0,
+                ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
+  }
+
+  bool _isSilentMode = false;
+
+  void _toggleSilentMode() {
+    setState(() {
+      _isSilentMode = !_isSilentMode;
+    });
+    if (_isSilentMode) {
+      // Mute all notifications
+      // You might need to use platform-specific code to actually mute notifications
+      print('Silent mode enabled');
+    } else {
+      // Unmute notifications
+      // You might need to use platform-specific code to actually unmute notifications
+      print('Silent mode disabled');
+    }
   }
 
   final ImagePicker _picker = ImagePicker();
@@ -377,60 +403,4 @@ class Recognition {
     required this.confidence,
     required this.rect,
   });
-}
-
-class RecognitionPainter extends CustomPainter {
-  final List<Recognition> recognitions;
-  final double previewWidth;
-  final double previewHeight;
-
-  RecognitionPainter(this.recognitions, this.previewWidth, this.previewHeight);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.red
-      ..strokeWidth = 3.0
-      ..style = PaintingStyle.stroke;
-
-    final textPainter = TextPainter(
-      textAlign: TextAlign.left,
-      textDirection: TextDirection.ltr,
-    );
-
-    for (var recognition in recognitions) {
-      // Scale rect position and size based on the canvas size
-      final rect = Rect.fromLTRB(
-        recognition.rect.left * size.width / previewWidth,
-        recognition.rect.top * size.height / previewHeight,
-        recognition.rect.right * size.width / previewWidth,
-        recognition.rect.bottom * size.height / previewHeight,
-      );
-
-      // Draw bounding box
-      canvas.drawRect(rect, paint);
-
-      // Prepare and draw label text
-      final label =
-          '${recognition.label} ${(recognition.confidence * 100).toStringAsFixed(1)}%';
-      textPainter.text = TextSpan(
-        text: label,
-        style: TextStyle(
-          color: Colors.red,
-          fontSize: 16,
-          background: Paint()..color = Colors.white,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(rect.left, rect.top - textPainter.height),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    return true;
-  }
 }
