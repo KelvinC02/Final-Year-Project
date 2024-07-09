@@ -1,6 +1,4 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import '../app_export.dart';
 
 const num design_width = 360;
 const num design_height = 800;

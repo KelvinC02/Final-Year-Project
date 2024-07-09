@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import '../core/app_export.dart';
-import 'package:flutter_vision/flutter_vision.dart';
 import 'package:image_picker/image_picker.dart';
-
-FlutterVision vision = FlutterVision();
+import '../core/app_export.dart';
+import '../model_recognition/recognition_logic.dart';
+import '../model_recognition/recognition_overlay.dart';
 
 class ObjectRecognitionMainPageScreen extends StatefulWidget {
   final bool permissionGranted;
@@ -22,15 +21,13 @@ class _ObjectRecognitionMainPageScreenState
     extends State<ObjectRecognitionMainPageScreen> {
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
-  List<Recognition> _recognitions = []; // Initialize as an empty list
-  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.permissionGranted) {
       _initializeCamera();
-      _loadModel();
+      RecognitionLogic.loadModel();
     }
   }
 
@@ -46,91 +43,24 @@ class _ObjectRecognitionMainPageScreenState
         if (mounted) {
           setState(() {});
           _controller?.startImageStream((image) {
-            if (!_isProcessing) {
-              _isProcessing = true;
-              _processCameraImage(image);
+            if (!RecognitionLogic.isProcessing) {
+              RecognitionLogic.isProcessing = true;
+              RecognitionLogic.processCameraImage(image, _controller!, () {
+                setState(() {});
+              });
             }
           });
         }
       });
-      print('Camera initialized successfully');
     } catch (e) {
       print('Error initializing camera: $e');
-    }
-  }
-
-  Future<void> _loadModel() async {
-    try {
-      await vision.loadYoloModel(
-        labels: 'assets/labels.txt',
-        modelPath: 'assets/yolov8s.tflite',
-        modelVersion: 'yolov8',
-        quantization: false,
-        numThreads: 1,
-        useGpu: false,
-      );
-      print('YOLO model loaded successfully');
-    } catch (e) {
-      print('Error loading YOLO model: $e');
-    }
-  }
-
-  void _processCameraImage(CameraImage image) async {
-    try {
-      final bytesList = image.planes.map((plane) => plane.bytes).toList();
-      if (bytesList.isEmpty) {
-        print('Error: bytesList is empty');
-        return;
-      }
-
-      final results = await vision.yoloOnFrame(
-        bytesList: bytesList,
-        imageHeight: image.height,
-        imageWidth: image.width,
-        iouThreshold: 0.4,
-        confThreshold: 0.4,
-        classThreshold: 0.5,
-      );
-
-      if (results.isNotEmpty) {
-        print('Recognition results: $results');
-        setState(() {
-          _recognitions = results.map((result) {
-            final label = result['tag'] ?? '';
-            final confidence = result['box'][4] ?? 0.0;
-
-            // Map the bounding box coordinates back to the original image dimensions
-            final x1 = result['box'][0] * image.width / 800;
-            final y1 = result['box'][1] * image.height / 800;
-            final x2 = result['box'][2] * image.width / 800;
-            final y2 = result['box'][3] * image.height / 800;
-
-            final rect = Rect.fromLTRB(x1, y1, x2, y2);
-
-            return Recognition(
-              label: label,
-              confidence: confidence,
-              rect: rect,
-            );
-          }).toList();
-        });
-      } else {
-        print('No object detected');
-        setState(() {
-          _recognitions = [];
-        });
-      }
-    } catch (e) {
-      print('Error processing camera image: $e');
-    } finally {
-      _isProcessing = false; // Reset the flag
     }
   }
 
   @override
   void dispose() {
     _controller?.dispose();
-    vision.closeYoloModel();
+    RecognitionLogic.vision.closeYoloModel();
     super.dispose();
   }
 
@@ -147,78 +77,8 @@ class _ObjectRecognitionMainPageScreenState
             child: CameraPreview(_controller!),
           ),
         ),
-        _buildRecognitionOverlay(),
+        RecognitionOverlay(controller: _controller!),
       ],
-    );
-  }
-
-  Widget _buildRecognitionOverlay() {
-    if (_recognitions.isEmpty) return Container();
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        var screenWidth = constraints.maxWidth;
-        var screenHeight = constraints.maxHeight;
-
-        var previewWidth = _controller!.value.previewSize!.height;
-        var previewHeight = _controller!.value.previewSize!.width;
-
-        var screenRatio = screenWidth / screenHeight;
-        var previewRatio = previewWidth / previewHeight;
-
-        double scaleX, scaleY;
-        if (screenRatio > previewRatio) {
-          scaleX = screenWidth / previewWidth;
-          scaleY = scaleX;
-        } else {
-          scaleY = screenHeight / previewHeight;
-          scaleX = scaleY;
-        }
-
-        print('Screen size: $screenWidth x $screenHeight');
-        print('Preview size: $previewWidth x $previewHeight');
-        print('Scale factors: scaleX=$scaleX, scaleY=$scaleY');
-
-        return Stack(
-          children: _recognitions.map((recog) {
-            var box = recog.rect;
-            var tag;
-            if (recog.label == "car" || recog.label == "truck") {
-              tag = "obstacles";
-            }
-            var confidence = recog.confidence;
-
-            // Adjust the box coordinates based on the scale
-            var left = box.left * scaleX;
-            var top = box.top * scaleY;
-            var width = box.width * scaleX;
-            var height = box.height * scaleY;
-
-            return Positioned(
-              left: left,
-              top: top,
-              width: width,
-              height: height,
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.red,
-                    width: 2,
-                  ),
-                ),
-                child: Text(
-                  "$tag ${(confidence * 100).toStringAsFixed(0)}%",
-                  style: TextStyle(
-                    background: Paint()..color = Colors.red,
-                    color: Colors.white,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        );
-      },
     );
   }
 
@@ -249,11 +109,11 @@ class _ObjectRecognitionMainPageScreenState
             ),
             Column(
               children: [
-                _buildInboxImages1(context), // Top row of icons
+                _buildInboxImages1(context),
                 Expanded(
-                  child: Container(), // Empty container to fill space
+                  child: Container(),
                 ),
-                _buildInboxImages2(context), // Bottom row of icons
+                _buildInboxImages2(context),
               ],
             ),
           ],
@@ -327,12 +187,8 @@ class _ObjectRecognitionMainPageScreenState
       _isSilentMode = !_isSilentMode;
     });
     if (_isSilentMode) {
-      // Mute all notifications
-      // You might need to use platform-specific code to actually mute notifications
       print('Silent mode enabled');
     } else {
-      // Unmute notifications
-      // You might need to use platform-specific code to actually unmute notifications
       print('Silent mode disabled');
     }
   }
@@ -342,7 +198,6 @@ class _ObjectRecognitionMainPageScreenState
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      // Do something with the picked file, e.g., display it in an Image widget
       print('Picked file path: ${pickedFile.path}');
     }
   }
@@ -355,8 +210,7 @@ class _ObjectRecognitionMainPageScreenState
         children: [
           GestureDetector(
             onTap: () {
-              Navigator.pushNamed(context,
-                  AppRoutes.mainPageScreen); // Navigate back to previous screen
+              Navigator.pushNamed(context, AppRoutes.mainPageScreen);
             },
             child: Container(
               margin: EdgeInsets.symmetric(vertical: 9.0),
@@ -376,7 +230,7 @@ class _ObjectRecognitionMainPageScreenState
           Spacer(flex: 48),
           GestureDetector(
             onTap: () async {
-              await _pickImage(); // Open the gallery to pick an image
+              await _pickImage();
             },
             child: Container(
               margin: EdgeInsets.symmetric(vertical: 9.0),
@@ -391,16 +245,4 @@ class _ObjectRecognitionMainPageScreenState
       ),
     );
   }
-}
-
-class Recognition {
-  final String label;
-  final double confidence;
-  final Rect rect;
-
-  Recognition({
-    required this.label,
-    required this.confidence,
-    required this.rect,
-  });
 }
