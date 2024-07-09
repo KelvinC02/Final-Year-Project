@@ -50,9 +50,9 @@ class RecognitionOverlay extends StatelessWidget {
 
             // Adjust the box coordinates based on the scale
             var left = box.left * scaleX;
-            var top = box.top * scaleY;
+            var top = (box.top * scaleY) - 30;
             var width = box.width * scaleX;
-            var height = box.height * scaleY;
+            var height = (box.height * scaleY) - 15;
 
             print('Drawing box at $left, $top, width: $width, height: $height');
 
