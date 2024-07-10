@@ -6,11 +6,14 @@ class RecognitionOverlay extends StatelessWidget {
   final CameraController controller;
   final bool isRecognitionEnabled;
   final bool isTrafficLightRecognitionEnabled;
+  final bool isPedestrianRecognitionEnabled; // Add this parameter
 
-  RecognitionOverlay(
-      {required this.controller,
-      required this.isRecognitionEnabled,
-      required this.isTrafficLightRecognitionEnabled});
+  RecognitionOverlay({
+    required this.controller,
+    required this.isRecognitionEnabled,
+    required this.isTrafficLightRecognitionEnabled,
+    required this.isPedestrianRecognitionEnabled, // Add this parameter
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +53,10 @@ class RecognitionOverlay extends StatelessWidget {
                     recog.label == "trafficLight-Red")) {
               return false;
             }
+            if (!isPedestrianRecognitionEnabled &&
+                recog.label == "pedestrian") {
+              return false;
+            }
             return true;
           }).map((recog) {
             var box = recog.rect;
@@ -82,7 +89,7 @@ class RecognitionOverlay extends StatelessWidget {
                   style: TextStyle(
                     background: Paint()..color = Colors.red,
                     color: Colors.white,
-                    fontSize: 15,
+                    fontSize: 14.0,
                   ),
                 ),
               ),

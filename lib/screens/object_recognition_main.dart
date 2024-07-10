@@ -28,6 +28,7 @@ class _ObjectRecognitionMainPageScreenState
   bool _isSilentMode = false;
   bool _isRecognitionEnabled = true;
   bool _isTrafficLightRecognitionEnabled = true;
+  bool _isPedestrianRecognitionEnabled = true;
   String? _permissionStatus;
 
   @override
@@ -69,9 +70,16 @@ class _ObjectRecognitionMainPageScreenState
           setState(() {});
           _controller?.startImageStream((image) {
             if (!RecognitionLogic.isProcessing) {
-              RecognitionLogic.processCameraImage(image, _controller!, () {
-                setState(() {});
-              }, _isRecognitionEnabled, _isTrafficLightRecognitionEnabled);
+              RecognitionLogic.processCameraImage(
+                image,
+                _controller!,
+                () {
+                  setState(() {});
+                },
+                _isRecognitionEnabled,
+                _isTrafficLightRecognitionEnabled,
+                _isPedestrianRecognitionEnabled, // Add this parameter
+              );
             }
           });
         }
@@ -159,6 +167,7 @@ class _ObjectRecognitionMainPageScreenState
           controller: _controller!,
           isRecognitionEnabled: _isRecognitionEnabled,
           isTrafficLightRecognitionEnabled: _isTrafficLightRecognitionEnabled,
+          isPedestrianRecognitionEnabled: _isPedestrianRecognitionEnabled,
         ),
       ],
     );
@@ -218,7 +227,7 @@ class _ObjectRecognitionMainPageScreenState
                   image: AssetImage(
                     _isRecognitionEnabled
                         ? 'assets/images/object_detection_icon.png'
-                        : 'assets/images/object_detection_disable_icon.png', // Add a disabled icon
+                        : 'assets/images/object_detection_disable_icon.png',
                   ),
                   height: 80.0,
                   width: 80.0,
@@ -240,7 +249,7 @@ class _ObjectRecognitionMainPageScreenState
                   image: AssetImage(
                     _isTrafficLightRecognitionEnabled
                         ? 'assets/images/traffic_light_icon.png'
-                        : 'assets/images/traffic_light_disable_icon.png', // Add a disabled icon
+                        : 'assets/images/traffic_light_disable_icon.png',
                   ),
                   height: 80.0,
                   width: 80.0,
@@ -249,12 +258,24 @@ class _ObjectRecognitionMainPageScreenState
             ),
           ),
           Expanded(
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 20.0),
-              child: Image(
-                image: AssetImage('assets/images/warning_icon.png'),
-                height: 80.0,
-                width: 80.0,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isPedestrianRecognitionEnabled =
+                      !_isPedestrianRecognitionEnabled;
+                });
+              },
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Image(
+                  image: AssetImage(
+                    _isPedestrianRecognitionEnabled
+                        ? 'assets/images/warning_icon.png'
+                        : 'assets/images/warning_disable_icon.png', // Add a disabled icon
+                  ),
+                  height: 80.0,
+                  width: 80.0,
+                ),
               ),
             ),
           ),

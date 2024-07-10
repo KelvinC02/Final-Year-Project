@@ -30,7 +30,9 @@ class RecognitionLogic {
       CameraController controller,
       Function() updateUI,
       bool isRecognitionEnabled,
-      bool isTrafficLightRecognitionEnabled) async {
+      bool isTrafficLightRecognitionEnabled,
+      bool isPedestrianRecognitionEnabled) async {
+    // Add this parameter
     if (isProcessing || !isRecognitionEnabled) return;
     isProcessing = true;
 
@@ -54,12 +56,15 @@ class RecognitionLogic {
         recognitions = results
             .map((result) {
               final label = result['tag'] ?? '';
-              print('Recognition result: $result'); // Add this line
+              print('Recognition result: $result');
               if (!isTrafficLightRecognitionEnabled &&
                   (label == "trafficLight-Green" ||
                       label == "trafficLight-Red" ||
                       label == "trafficLight-Yellow")) {
-                return null; // Filter out traffic light detection if disabled
+                return null;
+              }
+              if (!isPedestrianRecognitionEnabled && label == "pedestrian") {
+                return null; // Filter out pedestrian detection if disabled
               }
 
               final confidence = result['box'][4] ?? 0.0;
