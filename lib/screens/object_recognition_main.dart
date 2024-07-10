@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:sound_mode/permission_handler.dart';
 import 'package:sound_mode/sound_mode.dart';
 import 'package:sound_mode/utils/ringer_mode_statuses.dart';
@@ -9,6 +10,7 @@ import 'package:alarmplayer/alarmplayer.dart';
 import '../core/app_export.dart';
 import '../model_recognition/recognition_logic.dart';
 import '../model_recognition/recognition_overlay.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 class ObjectRecognitionMainPageScreen extends StatefulWidget {
   final bool permissionGranted;
@@ -26,6 +28,7 @@ class _ObjectRecognitionMainPageScreenState
     extends State<ObjectRecognitionMainPageScreen> with WidgetsBindingObserver {
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
+  final ScreenshotController screenshotController = ScreenshotController();
   bool _isSilentMode = false;
   bool _isRecognitionEnabled = true;
   bool _isTrafficLightRecognitionEnabled = true;
@@ -233,34 +236,38 @@ class _ObjectRecognitionMainPageScreenState
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: Column(
-          children: [
-            _buildInboxImages1(context),
-            SizedBox(height: 15),
-            Expanded(
-              child: widget.permissionGranted
-                  ? FutureBuilder<void>(
-                      future: _initializeControllerFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.done) {
-                          return _buildCameraPreview();
-                        } else {
-                          return Center(child: CircularProgressIndicator());
-                        }
-                      },
-                    )
-                  : Center(
-                      child: Text(
-                        'Permission Denied',
-                        style: TextStyle(fontSize: 24.0, color: Colors.red),
+    return Screenshot(
+      controller: screenshotController,
+      child: SafeArea(
+        child: Scaffold(
+          body: Column(
+            children: [
+              _buildInboxImages1(context),
+              SizedBox(height: 15),
+              Expanded(
+                child: widget.permissionGranted
+                    ? FutureBuilder<void>(
+                        future: _initializeControllerFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.done) {
+                            return _buildCameraPreview();
+                          } else {
+                            return Center(child: CircularProgressIndicator());
+                          }
+                        },
+                      )
+                    : Center(
+                        child: Text(
+                          'Permission Denied',
+                          style: TextStyle(fontSize: 24.0, color: Colors.red),
+                        ),
                       ),
-                    ),
-            ),
-            SizedBox(height: 15),
-            _buildInboxImages2(context),
-          ],
+              ),
+              SizedBox(height: 15),
+              _buildInboxImages2(context),
+            ],
+          ),
         ),
       ),
     );
@@ -388,10 +395,28 @@ class _ObjectRecognitionMainPageScreenState
             ),
           ),
           Spacer(flex: 51),
-          Image(
-            image: AssetImage('assets/images/capture_icon.png'),
-            height: 58.0,
-            width: 58.0,
+          GestureDetector(
+            onTap: () async {
+              screenshotController.capture().then((Uint8List? image) async {
+                if (image != null) {
+                  final result = await ImageGallerySaver.saveImage(image);
+                  print("File Saved to Gallery: $result");
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Screenshot saved to gallery")),
+                  );
+                }
+              }).catchError((onError) {
+                print(onError);
+              });
+            },
+            child: Container(
+              margin: EdgeInsets.symmetric(vertical: 9.0),
+              child: Image(
+                image: AssetImage('assets/images/capture_icon.png'),
+                height: 58.0,
+                width: 58.0,
+              ),
+            ),
           ),
           Spacer(flex: 48),
           GestureDetector(
