@@ -26,8 +26,8 @@ class RecognitionLogic {
   }
 
   static void processCameraImage(CameraImage image, CameraController controller,
-      Function() updateUI) async {
-    if (isProcessing) return;
+      Function() updateUI, bool isRecognitionEnabled) async {
+    if (isProcessing || !isRecognitionEnabled) return;
     isProcessing = true;
 
     try {

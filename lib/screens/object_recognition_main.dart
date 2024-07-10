@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:sound_mode/permission_handler.dart';
 import 'package:sound_mode/sound_mode.dart';
 import 'package:sound_mode/utils/ringer_mode_statuses.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../core/app_export.dart';
 import '../model_recognition/recognition_logic.dart';
 import '../model_recognition/recognition_overlay.dart';
@@ -23,20 +22,37 @@ class ObjectRecognitionMainPageScreen extends StatefulWidget {
 }
 
 class _ObjectRecognitionMainPageScreenState
-    extends State<ObjectRecognitionMainPageScreen> {
+    extends State<ObjectRecognitionMainPageScreen> with WidgetsBindingObserver {
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
   bool _isSilentMode = false;
+  bool _isRecognitionEnabled = true;
   String? _permissionStatus;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (widget.permissionGranted) {
       _initializeCamera();
       RecognitionLogic.loadModel();
     }
     _getPermissionStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _controller?.dispose();
+    RecognitionLogic.vision.closeYoloModel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _getPermissionStatus();
+    }
   }
 
   void _initializeCamera() async {
@@ -54,7 +70,7 @@ class _ObjectRecognitionMainPageScreenState
             if (!RecognitionLogic.isProcessing) {
               RecognitionLogic.processCameraImage(image, _controller!, () {
                 setState(() {});
-              });
+              }, _isRecognitionEnabled);
             }
           });
         }
@@ -84,13 +100,12 @@ class _ObjectRecognitionMainPageScreenState
   }
 
   void _toggleSilentMode() async {
-    bool isSilent = !_isSilentMode;
-
     if (_permissionStatus == "Permissions not granted") {
       await _requestDoNotDisturbPermission();
-      _getPermissionStatus(); // Re-check permission status after the user has potentially granted it
       return;
     }
+
+    bool isSilent = !_isSilentMode;
 
     try {
       if (isSilent) {
@@ -126,13 +141,6 @@ class _ObjectRecognitionMainPageScreenState
     );
   }
 
-  @override
-  void dispose() {
-    _controller?.dispose();
-    RecognitionLogic.vision.closeYoloModel();
-    super.dispose();
-  }
-
   Widget _buildCameraPreview() {
     if (_controller == null || !_controller!.value.isInitialized) {
       return Center(child: CircularProgressIndicator());
@@ -146,7 +154,9 @@ class _ObjectRecognitionMainPageScreenState
             child: CameraPreview(_controller!),
           ),
         ),
-        RecognitionOverlay(controller: _controller!),
+        RecognitionOverlay(
+            controller: _controller!,
+            isRecognitionEnabled: _isRecognitionEnabled),
       ],
     );
   }
@@ -193,12 +203,23 @@ class _ObjectRecognitionMainPageScreenState
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-            child: Container(
-              margin: EdgeInsets.only(right: 20.0),
-              child: Image(
-                image: AssetImage('assets/images/object_detection_icon.png'),
-                height: 80.0,
-                width: 80.0,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isRecognitionEnabled = !_isRecognitionEnabled;
+                });
+              },
+              child: Container(
+                margin: EdgeInsets.only(right: 20.0),
+                child: Image(
+                  image: AssetImage(
+                    _isRecognitionEnabled
+                        ? 'assets/images/object_detection_icon.png'
+                        : 'assets/images/object_detection_disable_icon.png', // Add a disabled icon
+                  ),
+                  height: 80.0,
+                  width: 80.0,
+                ),
               ),
             ),
           ),

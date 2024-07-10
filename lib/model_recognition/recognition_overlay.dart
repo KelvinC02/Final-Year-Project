@@ -4,13 +4,15 @@ import 'recognition_logic.dart';
 
 class RecognitionOverlay extends StatelessWidget {
   final CameraController controller;
+  final bool isRecognitionEnabled;
 
-  RecognitionOverlay({required this.controller});
+  RecognitionOverlay(
+      {required this.controller, required this.isRecognitionEnabled});
 
   @override
   Widget build(BuildContext context) {
-    if (RecognitionLogic.recognitions.isEmpty) {
-      print('No recognitions found');
+    if (!isRecognitionEnabled || RecognitionLogic.recognitions.isEmpty) {
+      print('No recognitions found or recognition disabled');
       return Container();
     }
 
@@ -48,7 +50,6 @@ class RecognitionOverlay extends StatelessWidget {
             }
             var confidence = recog.confidence;
 
-            // Adjust the box coordinates based on the scale
             var left = box.left * scaleX;
             var top = (box.top * scaleY) - 30;
             var width = box.width * scaleX;
