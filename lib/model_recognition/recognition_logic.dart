@@ -1,12 +1,17 @@
 import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter_vision/flutter_vision.dart';
+import 'package:alarmplayer/alarmplayer.dart';
 
 class RecognitionLogic {
   static final FlutterVision vision = FlutterVision();
   static bool isProcessing = false;
   static List<Recognition> recognitions = [];
-  static bool isPedestrianAlertShown = false; // Add this flag
+  static bool isPedestrianAlertShown = false;
+  static bool isTrafficLightGreenAlertShown = false;
+  static bool isTrafficLightRedAlertShown = false;
+  static Alarmplayer alarmPlayer = Alarmplayer();
+  static bool isAlarmPlaying = false;
 
   static Future<void> loadModel() async {
     try {
@@ -33,7 +38,9 @@ class RecognitionLogic {
     bool isRecognitionEnabled,
     bool isTrafficLightRecognitionEnabled,
     bool isPedestrianRecognitionEnabled,
-    Function() showPedestrianAlert, // Add this parameter
+    Function() showPedestrianAlert,
+    Function() playAlarm,
+    Function() stopAlarm,
   ) async {
     if (isProcessing || !isRecognitionEnabled) return;
     isProcessing = true;
@@ -54,6 +61,9 @@ class RecognitionLogic {
         classThreshold: 0.5,
       );
 
+      bool trafficLightGreenDetected = false;
+      bool trafficLightRedDetected = false;
+
       if (results.isNotEmpty) {
         recognitions = results
             .map((result) {
@@ -66,7 +76,7 @@ class RecognitionLogic {
                 return null;
               }
               if (!isPedestrianRecognitionEnabled && label == "pedestrian") {
-                return null; // Filter out pedestrian detection if disabled
+                return null;
               }
 
               final confidence = result['box'][4] ?? 0.0;
@@ -88,6 +98,23 @@ class RecognitionLogic {
                 showPedestrianAlert();
               }
 
+              // Trigger the alert if a traffic light is detected and the alert has not been shown
+              if (label == "trafficLight-Green") {
+                trafficLightGreenDetected = true;
+                if (!isTrafficLightGreenAlertShown) {
+                  isTrafficLightGreenAlertShown = true;
+                  playAlarm();
+                }
+              }
+
+              if (label == "trafficLight-Red") {
+                trafficLightRedDetected = true;
+                if (!isTrafficLightRedAlertShown) {
+                  isTrafficLightRedAlertShown = true;
+                  playAlarm();
+                }
+              }
+
               return Recognition(
                 label: label,
                 confidence: confidence,
@@ -100,6 +127,16 @@ class RecognitionLogic {
       } else {
         recognitions = [];
       }
+
+      // Stop the alarm if no traffic lights are detected
+      if (!trafficLightGreenDetected && !trafficLightRedDetected) {
+        if (isTrafficLightGreenAlertShown || isTrafficLightRedAlertShown) {
+          stopAlarm();
+        }
+        isTrafficLightGreenAlertShown = false;
+        isTrafficLightRedAlertShown = false;
+      }
+
       updateUI();
     } catch (e) {
       print('Error processing camera image: $e');
@@ -110,6 +147,36 @@ class RecognitionLogic {
 
   static void resetPedestrianAlert() {
     isPedestrianAlertShown = false; // Method to reset the flag
+    isTrafficLightGreenAlertShown = false;
+    isTrafficLightRedAlertShown = false;
+  }
+
+  static void resetAlerts() {
+    isPedestrianAlertShown = false;
+    isTrafficLightGreenAlertShown = false;
+    isTrafficLightRedAlertShown = false;
+    stopAlarm();
+  }
+
+  static void startAlarm() {
+    if (!isAlarmPlaying) {
+      alarmPlayer.Alarm(
+        url: "assets/alert_sound.mp3",
+        volume: 0.5,
+        looping: true,
+        callback: () {
+          isAlarmPlaying = false;
+        },
+      );
+      isAlarmPlaying = true;
+    }
+  }
+
+  static void stopAlarm() {
+    if (isAlarmPlaying) {
+      alarmPlayer.StopAlarm();
+      isAlarmPlaying = false;
+    }
   }
 }
 

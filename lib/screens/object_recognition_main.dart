@@ -83,7 +83,9 @@ class _ObjectRecognitionMainPageScreenState
                 _isRecognitionEnabled,
                 _isTrafficLightRecognitionEnabled,
                 _isPedestrianRecognitionEnabled,
-                _showPedestrianAlert, // Pass the callback function
+                _showPedestrianAlert,
+                RecognitionLogic.startAlarm,
+                RecognitionLogic.stopAlarm,
               );
             }
           });
@@ -92,6 +94,14 @@ class _ObjectRecognitionMainPageScreenState
     } catch (e) {
       print('Error initializing camera: $e');
     }
+  }
+
+  void _playAlarm() {
+    alarmplayer.Alarm(
+      url: "assets/alert_sound.mp3",
+      volume: 0.5,
+      looping: true,
+    );
   }
 
   void _getPermissionStatus() async {
