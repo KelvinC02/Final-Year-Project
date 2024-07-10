@@ -1,10 +1,14 @@
-# coding
+# DriveVue
 
-Flutter Project for FYP
+Object Recognition for Autonomous Vehicle
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This project is developed to fulfill the subject PRG3223 - Capstone Project 2 for a Bachelor Degree
+in Sunway University. It is only be used for educational purpose only, and strictly no commercial
+purpose. Any circumstances resulted from using this application in real-world scenario will not be
+liable.
+Please contact 20054235@imail.sunway.edu.my for any enquiry.
 
 A few resources to get you started if this is your first Flutter project:
 
