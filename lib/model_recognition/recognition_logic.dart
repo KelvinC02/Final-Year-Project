@@ -20,10 +20,8 @@ class RecognitionLogic {
         modelPath: 'assets/yolov8s.tflite',
         modelVersion: 'yolov8',
         quantization: true,
-        // Enable quantization
         numThreads: 4,
-        // Increase the number of threads for processing
-        useGpu: true, // Enable GPU if available
+        useGpu: true,
       );
       print('YOLO model loaded successfully');
     } catch (e) {
@@ -42,7 +40,7 @@ class RecognitionLogic {
     Function() playAlarm,
     Function() stopAlarm,
   ) async {
-    if (isProcessing || !isRecognitionEnabled) return;
+    if (isProcessing) return;
     isProcessing = true;
 
     try {
@@ -64,7 +62,7 @@ class RecognitionLogic {
       bool trafficLightGreenDetected = false;
       bool trafficLightRedDetected = false;
 
-      if (results.isNotEmpty) {
+      if (results.isNotEmpty && isRecognitionEnabled) {
         recognitions = results
             .map((result) {
               final label = result['tag'] ?? '';
@@ -126,6 +124,10 @@ class RecognitionLogic {
             .toList();
       } else {
         recognitions = [];
+        stopAlarm(); // Stop alarm if recognition is disabled or no results
+        isPedestrianAlertShown = false;
+        isTrafficLightGreenAlertShown = false;
+        isTrafficLightRedAlertShown = false;
       }
 
       // Stop the alarm if no traffic lights are detected
@@ -146,7 +148,7 @@ class RecognitionLogic {
   }
 
   static void resetPedestrianAlert() {
-    isPedestrianAlertShown = false; // Method to reset the flag
+    isPedestrianAlertShown = false;
     isTrafficLightGreenAlertShown = false;
     isTrafficLightRedAlertShown = false;
   }

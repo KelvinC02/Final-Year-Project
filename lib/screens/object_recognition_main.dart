@@ -84,6 +84,7 @@ class _ObjectRecognitionMainPageScreenState
                   setState(() {});
                 },
                 _isRecognitionEnabled,
+                // Pass the recognition enabled flag
                 _isTrafficLightRecognitionEnabled,
                 _isPedestrianRecognitionEnabled,
                 _showPedestrianAlert,
@@ -284,6 +285,10 @@ class _ObjectRecognitionMainPageScreenState
               onTap: () {
                 setState(() {
                   _isRecognitionEnabled = !_isRecognitionEnabled;
+                  if (!_isRecognitionEnabled) {
+                    RecognitionLogic
+                        .stopAlarm(); // Stop the alarm when recognition is disabled
+                  }
                 });
               },
               child: Container(
