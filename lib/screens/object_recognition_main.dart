@@ -44,7 +44,6 @@ class _ObjectRecognitionMainPageScreenState
           setState(() {});
           _controller?.startImageStream((image) {
             if (!RecognitionLogic.isProcessing) {
-              RecognitionLogic.isProcessing = true;
               RecognitionLogic.processCameraImage(image, _controller!, () {
                 setState(() {});
               });
@@ -88,10 +87,8 @@ class _ObjectRecognitionMainPageScreenState
       child: Scaffold(
         body: Column(
           children: [
-            _buildInboxImages1(context), // Top row of icons
-            SizedBox(
-              height: 15,
-            ),
+            _buildInboxImages1(context),
+            SizedBox(height: 15),
             Expanded(
               child: widget.permissionGranted
                   ? FutureBuilder<void>(
@@ -111,10 +108,8 @@ class _ObjectRecognitionMainPageScreenState
                       ),
                     ),
             ),
-            SizedBox(
-              height: 15,
-            ),
-            _buildInboxImages2(context), // Bottom row of icons
+            SizedBox(height: 15),
+            _buildInboxImages2(context),
           ],
         ),
       ),
@@ -186,12 +181,8 @@ class _ObjectRecognitionMainPageScreenState
       _isSilentMode = !_isSilentMode;
     });
     if (_isSilentMode) {
-      // Mute all notifications
-      // You might need to use platform-specific code to actually mute notifications
       print('Silent mode enabled');
     } else {
-      // Unmute notifications
-      // You might need to use platform-specific code to actually unmute notifications
       print('Silent mode disabled');
     }
   }
@@ -201,7 +192,6 @@ class _ObjectRecognitionMainPageScreenState
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      // Do something with the picked file, e.g., display it in an Image widget
       print('Picked file path: ${pickedFile.path}');
     }
   }
@@ -214,8 +204,7 @@ class _ObjectRecognitionMainPageScreenState
         children: [
           GestureDetector(
             onTap: () {
-              Navigator.pushNamed(context,
-                  AppRoutes.mainPageScreen); // Navigate back to previous screen
+              Navigator.pushNamed(context, AppRoutes.mainPageScreen);
             },
             child: Container(
               margin: EdgeInsets.symmetric(vertical: 9.0),
@@ -235,7 +224,7 @@ class _ObjectRecognitionMainPageScreenState
           Spacer(flex: 48),
           GestureDetector(
             onTap: () async {
-              await _pickImage(); // Open the gallery to pick an image
+              await _pickImage();
             },
             child: Container(
               margin: EdgeInsets.symmetric(vertical: 9.0),

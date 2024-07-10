@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:camera/camera.dart';
 import 'package:flutter_vision/flutter_vision.dart';
 
@@ -14,9 +13,11 @@ class RecognitionLogic {
         labels: 'assets/labels.txt',
         modelPath: 'assets/yolov8s.tflite',
         modelVersion: 'yolov8',
-        quantization: false,
-        numThreads: 1,
-        useGpu: false,
+        quantization: true,
+        // Enable quantization
+        numThreads: 4,
+        // Increase the number of threads for processing
+        useGpu: true, // Enable GPU if available
       );
       print('YOLO model loaded successfully');
     } catch (e) {
@@ -26,6 +27,9 @@ class RecognitionLogic {
 
   static void processCameraImage(CameraImage image, CameraController controller,
       Function() updateUI) async {
+    if (isProcessing) return;
+    isProcessing = true;
+
     try {
       final bytesList = image.planes.map((plane) => plane.bytes).toList();
       if (bytesList.isEmpty) {
@@ -43,12 +47,10 @@ class RecognitionLogic {
       );
 
       if (results.isNotEmpty) {
-        print('Recognition results: $results');
         recognitions = results.map((result) {
           final label = result['tag'] ?? '';
           final confidence = result['box'][4] ?? 0.0;
 
-          // Adjust the scaling based on the controller's preview size
           final previewSize = controller.value.previewSize;
           final widthScale = previewSize!.width / image.width;
           final heightScale = previewSize.height / image.height;
@@ -67,10 +69,9 @@ class RecognitionLogic {
           );
         }).toList();
       } else {
-        print('No object detected');
         recognitions = [];
       }
-      updateUI(); // Call the update function
+      updateUI();
     } catch (e) {
       print('Error processing camera image: $e');
     } finally {
