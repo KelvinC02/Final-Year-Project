@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sound_mode/permission_handler.dart';
+import 'package:sound_mode/sound_mode.dart';
+import 'package:sound_mode/utils/ringer_mode_statuses.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../core/app_export.dart';
 import '../model_recognition/recognition_logic.dart';
 import '../model_recognition/recognition_overlay.dart';
@@ -21,6 +26,8 @@ class _ObjectRecognitionMainPageScreenState
     extends State<ObjectRecognitionMainPageScreen> {
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
+  bool _isSilentMode = false;
+  String? _permissionStatus;
 
   @override
   void initState() {
@@ -29,6 +36,7 @@ class _ObjectRecognitionMainPageScreenState
       _initializeCamera();
       RecognitionLogic.loadModel();
     }
+    _getPermissionStatus();
   }
 
   void _initializeCamera() async {
@@ -37,7 +45,7 @@ class _ObjectRecognitionMainPageScreenState
       final firstCamera = cameras.first;
       _controller = CameraController(
         firstCamera,
-        ResolutionPreset.high,
+        ResolutionPreset.ultraHigh,
       );
       _initializeControllerFuture = _controller!.initialize().then((_) {
         if (mounted) {
@@ -54,6 +62,68 @@ class _ObjectRecognitionMainPageScreenState
     } catch (e) {
       print('Error initializing camera: $e');
     }
+  }
+
+  void _getPermissionStatus() async {
+    bool? permissionStatus = false;
+    try {
+      permissionStatus = await PermissionHandler.permissionsGranted;
+      print(permissionStatus);
+    } catch (err) {
+      print(err);
+    }
+
+    setState(() {
+      _permissionStatus =
+          permissionStatus! ? "Permissions Enabled" : "Permissions not granted";
+    });
+  }
+
+  Future<void> _requestDoNotDisturbPermission() async {
+    await PermissionHandler.openDoNotDisturbSetting();
+  }
+
+  void _toggleSilentMode() async {
+    bool isSilent = !_isSilentMode;
+
+    if (_permissionStatus == "Permissions not granted") {
+      await _requestDoNotDisturbPermission();
+      _getPermissionStatus(); // Re-check permission status after the user has potentially granted it
+      return;
+    }
+
+    try {
+      if (isSilent) {
+        await SoundMode.setSoundMode(RingerModeStatus.silent);
+      } else {
+        await SoundMode.setSoundMode(RingerModeStatus.normal);
+      }
+
+      setState(() {
+        _isSilentMode = isSilent;
+      });
+
+      if (isSilent) {
+        _showSilentModeDialog();
+      }
+    } on PlatformException {
+      print('Do Not Disturb access permissions required!');
+    }
+  }
+
+  void _showSilentModeDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        Future.delayed(Duration(seconds: 2), () {
+          Navigator.of(context).pop(true);
+        });
+        return AlertDialog(
+          title: Text("Silent Mode"),
+          content: Text("Silent mode enabled"),
+        );
+      },
+    );
   }
 
   @override
@@ -172,19 +242,6 @@ class _ObjectRecognitionMainPageScreenState
         ],
       ),
     );
-  }
-
-  bool _isSilentMode = false;
-
-  void _toggleSilentMode() {
-    setState(() {
-      _isSilentMode = !_isSilentMode;
-    });
-    if (_isSilentMode) {
-      print('Silent mode enabled');
-    } else {
-      print('Silent mode disabled');
-    }
   }
 
   final ImagePicker _picker = ImagePicker();

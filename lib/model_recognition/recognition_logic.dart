@@ -10,8 +10,8 @@ class RecognitionLogic {
   static Future<void> loadModel() async {
     try {
       await vision.loadYoloModel(
-        labels: 'assets/labels.txt',
-        modelPath: 'assets/yolov8s.tflite',
+        labels: 'assets/car_labels.txt',
+        modelPath: 'assets/car.tflite',
         modelVersion: 'yolov8',
         quantization: true,
         // Enable quantization

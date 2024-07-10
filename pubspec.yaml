@@ -20,6 +20,7 @@ dependencies:
   permission_handler: ^10.2.0
   flutter_vision: ^1.1.4
   image_picker: ^1.1.2
+  sound_mode: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -34,6 +35,8 @@ flutter:
     - assets/images/
     - assets/yolov8s.tflite
     - assets/labels.txt
+    - assets/car.tflite
+    - assets/car_labels.txt
 
 flutter_icons:
   android: true

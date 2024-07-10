@@ -14,68 +14,74 @@ class CameraTipsScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         appBar: _buildAppBar(context),
-        body: Container(
-          width: double.maxFinite,
-          padding: EdgeInsets.symmetric(
-            vertical: 33.v,
-          ),
-          child: Column(
-            children: [
-              SizedBox(
-                height: 18.v,
-              ),
-              Container(
-                width: 293.h,
-                margin: EdgeInsets.only(
-                  left: 27.h,
-                  right: 39.h,
+        body: SingleChildScrollView(
+          child: Container(
+            width: double.maxFinite,
+            padding: EdgeInsets.symmetric(
+              vertical: 33.v,
+            ),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 18.v,
                 ),
-                child: Text(
-                  "It is good to know that you are ready for our app! Here some tips on placing your camera:",
-                  overflow: TextOverflow.visible,
-                  style: CustomTextStyles.titleLargeBold,
+                Container(
+                  width: 293.h,
+                  margin: EdgeInsets.only(
+                    left: 27.h,
+                    right: 39.h,
+                  ),
+                  child: Text(
+                    "It is good to know that you are ready for our app! Here some tips on placing your camera:",
+                    overflow: TextOverflow.visible,
+                    style: CustomTextStyles.titleLargeBold,
+                  ),
                 ),
-              ),
-              SizedBox(
-                height: 38.v,
-              ),
-              Image(
-                image: AssetImage(
-                  'assets/images/placing_camera_tips.png',
+                SizedBox(
+                  height: 38.v,
                 ),
-                height: 230.v,
-                width: 350.h,
-              ),
-              SizedBox(
-                height: 46.v,
-              ),
-              Container(
-                width: 306.h,
-                margin: EdgeInsets.symmetric(
-                  horizontal: 27.h,
+                Image(
+                  image: AssetImage(
+                    'assets/images/placing_camera_tips.png',
+                  ),
+                  height: 230.v,
+                  width: 350.h,
                 ),
-                child: Text(
-                  "It is always advisable to install your camera at the center of the windshield for better performance. "
-                  "It can be either using a phone holder or at the rear-view mirror.",
-                  overflow: TextOverflow.visible,
-                  style: theme.textTheme.titleLarge,
+                SizedBox(
+                  height: 46.v,
                 ),
-              ),
-              SizedBox(
-                height: 35.v,
-              ),
-              CustomOutlinedButton(
-                width: 125.h,
-                text: "OK, I understand",
-                margin: EdgeInsets.only(
-                  right: 26.h,
+                Container(
+                  width: 306.h,
+                  margin: EdgeInsets.symmetric(
+                    horizontal: 27.h,
+                  ),
+                  child: Text(
+                    "It is always advisable to install your camera at the center of the windshield for better performance. "
+                    "It can be either using a phone holder or at the rear-view mirror.",
+                    overflow: TextOverflow.visible,
+                    style: theme.textTheme.titleLarge,
+                  ),
                 ),
-                onPressed: () {
-                  onTapOKUnderstand(context);
-                },
-                alignment: Alignment.centerRight,
-              ),
-            ],
+                SizedBox(
+                  height: 35.v,
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    margin: EdgeInsets.only(
+                      right: 26.h,
+                    ),
+                    child: CustomOutlinedButton(
+                      width: 125.h,
+                      text: "OK, I understand",
+                      onPressed: () {
+                        onTapOKUnderstand(context);
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -120,7 +126,7 @@ class CameraTipsScreen extends StatelessWidget {
     );
   }
 
-  onTapOKUnderstand(BuildContext context) {
+  void onTapOKUnderstand(BuildContext context) {
     Navigator.pushNamed(context, AppRoutes.mainPageScreen);
   }
 }
