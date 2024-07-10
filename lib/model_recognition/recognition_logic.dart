@@ -10,8 +10,8 @@ class RecognitionLogic {
   static Future<void> loadModel() async {
     try {
       await vision.loadYoloModel(
-        labels: 'assets/car_labels.txt',
-        modelPath: 'assets/car.tflite',
+        labels: 'assets/labels.txt',
+        modelPath: 'assets/yolov8s.tflite',
         modelVersion: 'yolov8',
         quantization: true,
         // Enable quantization
@@ -25,8 +25,12 @@ class RecognitionLogic {
     }
   }
 
-  static void processCameraImage(CameraImage image, CameraController controller,
-      Function() updateUI, bool isRecognitionEnabled) async {
+  static void processCameraImage(
+      CameraImage image,
+      CameraController controller,
+      Function() updateUI,
+      bool isRecognitionEnabled,
+      bool isTrafficLightRecognitionEnabled) async {
     if (isProcessing || !isRecognitionEnabled) return;
     isProcessing = true;
 
@@ -47,27 +51,39 @@ class RecognitionLogic {
       );
 
       if (results.isNotEmpty) {
-        recognitions = results.map((result) {
-          final label = result['tag'] ?? '';
-          final confidence = result['box'][4] ?? 0.0;
+        recognitions = results
+            .map((result) {
+              final label = result['tag'] ?? '';
+              print('Recognition result: $result'); // Add this line
+              if (!isTrafficLightRecognitionEnabled &&
+                  (label == "trafficLight-Green" ||
+                      label == "trafficLight-Red" ||
+                      label == "trafficLight-Yellow")) {
+                return null; // Filter out traffic light detection if disabled
+              }
 
-          final previewSize = controller.value.previewSize;
-          final widthScale = previewSize!.width / image.width;
-          final heightScale = previewSize.height / image.height;
+              final confidence = result['box'][4] ?? 0.0;
 
-          final x1 = result['box'][0] * widthScale;
-          final y1 = result['box'][1] * heightScale;
-          final x2 = result['box'][2] * widthScale;
-          final y2 = result['box'][3] * heightScale;
+              final previewSize = controller.value.previewSize;
+              final widthScale = previewSize!.width / image.width;
+              final heightScale = previewSize.height / image.height;
 
-          final rect = Rect.fromLTRB(x1, y1, x2, y2);
+              final x1 = result['box'][0] * widthScale;
+              final y1 = result['box'][1] * heightScale;
+              final x2 = result['box'][2] * widthScale;
+              final y2 = result['box'][3] * heightScale;
 
-          return Recognition(
-            label: label,
-            confidence: confidence,
-            rect: rect,
-          );
-        }).toList();
+              final rect = Rect.fromLTRB(x1, y1, x2, y2);
+
+              return Recognition(
+                label: label,
+                confidence: confidence,
+                rect: rect,
+              );
+            })
+            .where((element) => element != null)
+            .cast<Recognition>()
+            .toList();
       } else {
         recognitions = [];
       }
@@ -90,4 +106,9 @@ class Recognition {
     required this.confidence,
     required this.rect,
   });
+
+  @override
+  String toString() {
+    return 'Recognition(label: $label, confidence: $confidence, rect: $rect)';
+  }
 }

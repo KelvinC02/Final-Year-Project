@@ -27,6 +27,7 @@ class _ObjectRecognitionMainPageScreenState
   Future<void>? _initializeControllerFuture;
   bool _isSilentMode = false;
   bool _isRecognitionEnabled = true;
+  bool _isTrafficLightRecognitionEnabled = true;
   String? _permissionStatus;
 
   @override
@@ -70,7 +71,7 @@ class _ObjectRecognitionMainPageScreenState
             if (!RecognitionLogic.isProcessing) {
               RecognitionLogic.processCameraImage(image, _controller!, () {
                 setState(() {});
-              }, _isRecognitionEnabled);
+              }, _isRecognitionEnabled, _isTrafficLightRecognitionEnabled);
             }
           });
         }
@@ -155,8 +156,10 @@ class _ObjectRecognitionMainPageScreenState
           ),
         ),
         RecognitionOverlay(
-            controller: _controller!,
-            isRecognitionEnabled: _isRecognitionEnabled),
+          controller: _controller!,
+          isRecognitionEnabled: _isRecognitionEnabled,
+          isTrafficLightRecognitionEnabled: _isTrafficLightRecognitionEnabled,
+        ),
       ],
     );
   }
@@ -224,12 +227,24 @@ class _ObjectRecognitionMainPageScreenState
             ),
           ),
           Expanded(
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 20.0),
-              child: Image(
-                image: AssetImage('assets/images/traffic_light_icon.png'),
-                height: 80.0,
-                width: 80.0,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isTrafficLightRecognitionEnabled =
+                      !_isTrafficLightRecognitionEnabled;
+                });
+              },
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Image(
+                  image: AssetImage(
+                    _isTrafficLightRecognitionEnabled
+                        ? 'assets/images/traffic_light_icon.png'
+                        : 'assets/images/traffic_light_disable_icon.png', // Add a disabled icon
+                  ),
+                  height: 80.0,
+                  width: 80.0,
+                ),
               ),
             ),
           ),

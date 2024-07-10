@@ -5,9 +5,12 @@ import 'recognition_logic.dart';
 class RecognitionOverlay extends StatelessWidget {
   final CameraController controller;
   final bool isRecognitionEnabled;
+  final bool isTrafficLightRecognitionEnabled;
 
   RecognitionOverlay(
-      {required this.controller, required this.isRecognitionEnabled});
+      {required this.controller,
+      required this.isRecognitionEnabled,
+      required this.isTrafficLightRecognitionEnabled});
 
   @override
   Widget build(BuildContext context) {
@@ -40,14 +43,19 @@ class RecognitionOverlay extends StatelessWidget {
         }
 
         return Stack(
-          children: RecognitionLogic.recognitions.map((recog) {
-            var box = recog.rect;
-            var tag;
-            if (recog.label == "car" || recog.label == "truck") {
-              tag = "obstacles";
-            } else {
-              tag = recog.label;
+          children: RecognitionLogic.recognitions.where((recog) {
+            if (!isTrafficLightRecognitionEnabled &&
+                (recog.label == "trafficLight-Green" ||
+                    recog.label == "trafficLight-Yellow" ||
+                    recog.label == "trafficLight-Red")) {
+              return false;
             }
+            return true;
+          }).map((recog) {
+            var box = recog.rect;
+            var tag = recog.label == "car" || recog.label == "truck"
+                ? "obstacles"
+                : recog.label;
             var confidence = recog.confidence;
 
             var left = box.left * scaleX;
