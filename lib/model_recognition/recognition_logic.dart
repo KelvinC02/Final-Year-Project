@@ -6,6 +6,7 @@ class RecognitionLogic {
   static final FlutterVision vision = FlutterVision();
   static bool isProcessing = false;
   static List<Recognition> recognitions = [];
+  static bool isPedestrianAlertShown = false; // Add this flag
 
   static Future<void> loadModel() async {
     try {
@@ -26,13 +27,14 @@ class RecognitionLogic {
   }
 
   static void processCameraImage(
-      CameraImage image,
-      CameraController controller,
-      Function() updateUI,
-      bool isRecognitionEnabled,
-      bool isTrafficLightRecognitionEnabled,
-      bool isPedestrianRecognitionEnabled) async {
-    // Add this parameter
+    CameraImage image,
+    CameraController controller,
+    Function() updateUI,
+    bool isRecognitionEnabled,
+    bool isTrafficLightRecognitionEnabled,
+    bool isPedestrianRecognitionEnabled,
+    Function() showPedestrianAlert, // Add this parameter
+  ) async {
     if (isProcessing || !isRecognitionEnabled) return;
     isProcessing = true;
 
@@ -80,6 +82,12 @@ class RecognitionLogic {
 
               final rect = Rect.fromLTRB(x1, y1, x2, y2);
 
+              // Trigger the alert if a pedestrian is detected and the alert has not been shown
+              if (label == "pedestrian" && !isPedestrianAlertShown) {
+                isPedestrianAlertShown = true;
+                showPedestrianAlert();
+              }
+
               return Recognition(
                 label: label,
                 confidence: confidence,
@@ -98,6 +106,10 @@ class RecognitionLogic {
     } finally {
       isProcessing = false;
     }
+  }
+
+  static void resetPedestrianAlert() {
+    isPedestrianAlertShown = false; // Method to reset the flag
   }
 }
 

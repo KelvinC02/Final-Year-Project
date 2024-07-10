@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:sound_mode/permission_handler.dart';
 import 'package:sound_mode/sound_mode.dart';
 import 'package:sound_mode/utils/ringer_mode_statuses.dart';
+import 'package:alarmplayer/alarmplayer.dart';
 import '../core/app_export.dart';
 import '../model_recognition/recognition_logic.dart';
 import '../model_recognition/recognition_overlay.dart';
@@ -30,6 +31,8 @@ class _ObjectRecognitionMainPageScreenState
   bool _isTrafficLightRecognitionEnabled = true;
   bool _isPedestrianRecognitionEnabled = true;
   String? _permissionStatus;
+  Alarmplayer alarmplayer = Alarmplayer();
+  bool playing = false;
 
   @override
   void initState() {
@@ -47,6 +50,7 @@ class _ObjectRecognitionMainPageScreenState
     WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
     RecognitionLogic.vision.closeYoloModel();
+    alarmplayer.StopAlarm();
     super.dispose();
   }
 
@@ -78,7 +82,8 @@ class _ObjectRecognitionMainPageScreenState
                 },
                 _isRecognitionEnabled,
                 _isTrafficLightRecognitionEnabled,
-                _isPedestrianRecognitionEnabled, // Add this parameter
+                _isPedestrianRecognitionEnabled,
+                _showPedestrianAlert, // Pass the callback function
               );
             }
           });
@@ -147,6 +152,49 @@ class _ObjectRecognitionMainPageScreenState
           content: Text("Silent mode enabled"),
         );
       },
+    );
+  }
+
+  void _showPedestrianAlert() {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Pedestrian Detected",
+                style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16.0),
+              Text(
+                "A pedestrian has been detected.",
+                style: TextStyle(fontSize: 16.0),
+              ),
+              SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () {
+                  alarmplayer.StopAlarm();
+                  Navigator.of(context).pop();
+                  RecognitionLogic
+                      .resetPedestrianAlert(); // Reset the alert flag
+                },
+                child: Text("OK"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    alarmplayer.Alarm(
+      url:
+          "assets/alert_sound.mp3", // Ensure this file is in your assets folder
+      volume: 0.5,
+      looping: true,
     );
   }
 

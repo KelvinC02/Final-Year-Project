@@ -21,6 +21,7 @@ dependencies:
   flutter_vision: ^1.1.4
   image_picker: ^1.1.2
   sound_mode: ^3.0.0
+  alarmplayer: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -37,6 +38,7 @@ flutter:
     - assets/labels.txt
     - assets/car.tflite
     - assets/car_labels.txt
+    - assets/alert_sound.mp3
 
 flutter_icons:
   android: true
