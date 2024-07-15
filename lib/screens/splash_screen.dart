@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/app_export.dart';
 
 class SplashScreen extends StatelessWidget {
-  const SplashScreen({Key? key})
-      : super(
-          key: key,
-        );
+  const SplashScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -22,22 +19,31 @@ class SplashScreen extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 35.v),
             child: Column(
               children: [
-                Spacer(
-                  flex: 37,
-                ),
+                Spacer(flex: 37),
                 SizedBox(
-                  child: (Image.asset('assets/images/app_logo.png')),
+                  child: Image.asset('assets/images/app_logo.png'),
                 ),
-                Spacer(
-                  flex: 62,
-                ),
+                Spacer(flex: 40),
                 Text(
-                  "DriveVue",
-                  style: theme.textTheme.displaySmall,
+                  "Tap anywhere to continue",
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
                 ),
-                Text(
-                  "Version 1.0",
-                  style: theme.textTheme.bodyMedium,
+                Spacer(flex: 20),
+                Spacer(flex: 37),
+                Column(
+                  children: [
+                    Text(
+                      "DriveVue",
+                      style: theme.textTheme.displaySmall,
+                    ),
+                    Text(
+                      "Version 1.0",
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -47,59 +53,3 @@ class SplashScreen extends StatelessWidget {
     );
   }
 }
-
-// import 'dart:async';
-// import 'package:flutter/material.dart';
-// import '../core/app_export.dart';
-// import 'on_boarding_pg_one.dart';
-//
-// class SplashScreen extends StatefulWidget {
-//   const SplashScreen({Key? key}) : super(key: key);
-//
-//   @override
-//   _SplashScreenState createState() => _SplashScreenState();
-// }
-//
-// class _SplashScreenState extends State<SplashScreen> {
-//   @override
-//   void initState() {
-//     super.initState();
-//     // Delay navigation by 3 seconds (3000 milliseconds)
-//     Timer(
-//       Duration(seconds: 3),
-//       () {
-//         Navigator.pushNamed(context, AppRoutes.onBoardingPgOneScreen);
-//       },
-//     );
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return SafeArea(
-//       child: Scaffold(
-//         backgroundColor: Colors.white,
-//         body: Container(
-//           width: double.maxFinite,
-//           padding: EdgeInsets.symmetric(vertical: 35.v),
-//           child: Column(
-//             children: [
-//               Spacer(flex: 37),
-//               SizedBox(
-//                 child: Image.asset('assets/images/app_logo.png'),
-//               ),
-//               Spacer(flex: 62),
-//               Text(
-//                 "DriveVue",
-//                 style: theme.textTheme.displaySmall,
-//               ),
-//               Text(
-//                 "Version 1.0",
-//                 style: theme.textTheme.bodyMedium,
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
