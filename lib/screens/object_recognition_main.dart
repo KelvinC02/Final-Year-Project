@@ -340,8 +340,8 @@ class _ObjectRecognitionMainPageScreenState
                 child: Image(
                   image: AssetImage(
                     _isPedestrianRecognitionEnabled
-                        ? 'assets/images/warning_icon.png'
-                        : 'assets/images/warning_disable_icon.png', // Add a disabled icon
+                        ? 'assets/images/pedestrian_icon.png'
+                        : 'assets/images/pedestrian_disable_icon.png', // Add a disabled icon
                   ),
                   height: 80.0,
                   width: 80.0,
