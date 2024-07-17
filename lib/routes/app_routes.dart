@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import '../core/app_export.dart';
 import '../screens/camera_tips.dart';
 import '../screens/main_screen.dart';
-import '../screens/object_recognition_main.dart';
 import '../screens/on_boarding_pg_one.dart';
 import '../screens/on_boarding_pg_two.dart';
 import '../screens/on_boarding_pg_three.dart';
@@ -43,8 +41,6 @@ class AppRoutes {
     tutorialEndScreen: (context) => TutorialEndScreen(),
     mainPageScreen: (context) => MainScreen(),
     tipsOnPlacingCameraScreen: (context) => CameraTipsScreen(),
-    // objectRecognitionMainPageScreen: (context) =>
-    //     ObjectRecognitionMainPageScreen(),
     initialRoute: (context) => SplashScreen()
   };
 }

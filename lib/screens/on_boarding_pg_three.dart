@@ -29,9 +29,10 @@ class OnBoardingPgThreeScreen extends StatelessWidget {
               height: 5.v,
             ),
             SizedBox(
-                width: 177.h,
-                child: Image.asset(
-                    'assets/images/image_of_sound_based_warning_feature.png')),
+              width: 177.h,
+              child: Image.asset(
+                  'assets/images/image_of_sound_based_warning_feature.png'),
+            ),
             SizedBox(
               height: 20.v,
             ),

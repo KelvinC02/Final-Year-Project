@@ -13,8 +13,7 @@ class TermsAndConditions extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         body: SingleChildScrollView(
-          // Wrap with SingleChildScrollView
-          scrollDirection: Axis.vertical, // Set scroll direction to vertical
+          scrollDirection: Axis.vertical,
           child: Container(
             width: double.maxFinite,
             padding: EdgeInsets.symmetric(

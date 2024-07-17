@@ -6,13 +6,13 @@ class RecognitionOverlay extends StatelessWidget {
   final CameraController controller;
   final bool isRecognitionEnabled;
   final bool isTrafficLightRecognitionEnabled;
-  final bool isPedestrianRecognitionEnabled; // Add this parameter
+  final bool isPedestrianRecognitionEnabled;
 
   RecognitionOverlay({
     required this.controller,
     required this.isRecognitionEnabled,
     required this.isTrafficLightRecognitionEnabled,
-    required this.isPedestrianRecognitionEnabled, // Add this parameter
+    required this.isPedestrianRecognitionEnabled,
   });
 
   @override

@@ -29,9 +29,10 @@ class OnBoardingPgOneScreen extends StatelessWidget {
               height: 5.v,
             ),
             SizedBox(
-                width: 177.h,
-                child: Image.asset(
-                    'assets/images/image_of_object_recognition.png')),
+              width: 177.h,
+              child:
+                  Image.asset('assets/images/image_of_object_recognition.png'),
+            ),
             SizedBox(
               height: 20.v,
             ),

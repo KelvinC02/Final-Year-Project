@@ -1,4 +1,3 @@
-import 'package:DriveVue/screens/on_boarding_pg_one.dart';
 import 'package:flutter/material.dart';
 import '../core/app_export.dart';
 

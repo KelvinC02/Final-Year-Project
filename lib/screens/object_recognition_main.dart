@@ -100,14 +100,6 @@ class _ObjectRecognitionMainPageScreenState
     }
   }
 
-  void _playAlarm() {
-    alarmplayer.Alarm(
-      url: "assets/alert_sound.mp3",
-      volume: 0.5,
-      looping: true,
-    );
-  }
-
   void _getPermissionStatus() async {
     bool? permissionStatus = false;
     try {
@@ -193,8 +185,7 @@ class _ObjectRecognitionMainPageScreenState
                 onPressed: () {
                   alarmplayer.StopAlarm();
                   Navigator.of(context).pop();
-                  RecognitionLogic
-                      .resetPedestrianAlert(); // Reset the alert flag
+                  RecognitionLogic.resetPedestrianAlert();
                 },
                 child: Text("OK"),
               ),
@@ -205,8 +196,7 @@ class _ObjectRecognitionMainPageScreenState
     );
 
     alarmplayer.Alarm(
-      url:
-          "assets/alert_sound.mp3", // Ensure this file is in your assets folder
+      url: "assets/alert_sound.mp3",
       volume: 0.5,
       looping: true,
     );
@@ -341,7 +331,7 @@ class _ObjectRecognitionMainPageScreenState
                   image: AssetImage(
                     _isPedestrianRecognitionEnabled
                         ? 'assets/images/pedestrian_icon.png'
-                        : 'assets/images/pedestrian_disable_icon.png', // Add a disabled icon
+                        : 'assets/images/pedestrian_disable_icon.png',
                   ),
                   height: 80.0,
                   width: 80.0,
